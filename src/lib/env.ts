@@ -23,8 +23,7 @@ export const ENV = {
   OPENROUTER_API_KEY: getEnv('VITE_OPENROUTER_API_KEY', ''),
   SUPABASE_URL: getEnv('VITE_SUPABASE_URL', ''),
   SUPABASE_ANON_KEY: getEnv('VITE_SUPABASE_ANON_KEY', ''),
-  CLERK_PUBLISHABLE_KEY: getEnv('VITE_CLERK_PUBLISHABLE_KEY', ''),
-  CLAUDE_API_KEY: getEnv('VITE_CLAUDE_API_KEY', '')
+  CLERK_PUBLISHABLE_KEY: getEnv('VITE_CLERK_PUBLISHABLE_KEY', '')
 };
 
 // Validate required environment variables

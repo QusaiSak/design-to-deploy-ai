@@ -2,13 +2,11 @@ import { ENV } from './env';
 
 // Use our ENV utility instead of directly accessing import.meta.env
 const OPENROUTER_API_KEY = ENV.OPENROUTER_API_KEY;
-const CLAUDE_API_KEY = ENV.CLAUDE_API_KEY;
 
 // Debug function to check environment variables
 export function debugEnvVars() {
   console.log('Environment Variables Check:');
   console.log('OPENROUTER_API_KEY exists:', !!OPENROUTER_API_KEY);
-  console.log('CLAUDE_API_KEY exists:', !!CLAUDE_API_KEY);
   
   // Only log the first few characters if it exists for security
   if (OPENROUTER_API_KEY) {
@@ -17,28 +15,14 @@ export function debugEnvVars() {
     console.error('OpenRouter API key is missing or empty!');
     console.log('Please make sure the VITE_OPENROUTER_API_KEY is correctly set in your .env file');
   }
-  
-  if (CLAUDE_API_KEY) {
-    console.log('Claude key starts with:', CLAUDE_API_KEY.substring(0, 10) + '...');
-  } else {
-    console.warn('Claude API key is missing or empty!'); 
-    console.log('Set VITE_CLAUDE_API_KEY in your .env file if you want to use Claude directly');
-  }
 }
 
 // Constants for API configuration
 export const API_CONFIG = {
-  CLAUDE_MODELS: {
-    CLAUDE_3_5_SONNET: 'claude-3-5-sonnet-20241022',
-    CLAUDE_3_OPUS: 'claude-3-opus-20240229',
-    CLAUDE_3_SONNET: 'claude-3-sonnet-20240229',
-    CLAUDE_3_HAIKU: 'claude-3-haiku-20240307'
-  },
   OPENROUTER_MODELS: {
     GOOGLE_GEMINI_PRO: 'google/gemini-pro',
     META_LLAMA_3: 'meta-llama/llama-3-70b-instruct',
-    ANTHROPIC_CLAUDE_3_5: 'anthropic/claude-3-5-sonnet',
-    ANTHROPIC_CLAUDE_3_OPUS: 'anthropic/claude-3-opus'
+    GOOGLE_GEMINI_PRO_VISION: 'google/gemini-2.5-pro-exp-03-25:free'
   },
   MAX_TOKENS: {
     DEFAULT: 4096,
@@ -69,137 +53,6 @@ function emitCodeUpdate(code: string) {
     listener(code);
   }
 }
-
-// Claude API Service
-export const claudeApiService = {
-  async generateWithTemplate(prompt: string): Promise<{ prompts: string[], uiPrompts: string[] }> {
-    try {
-      if (!CLAUDE_API_KEY) {
-        throw new Error('Claude API key is missing. Please set VITE_CLAUDE_API_KEY in your .env file.');
-      }
-      
-      // Base prompts for React and Node
-      const reactBasePrompt = `<boltArtifact id="project-import" title="Project Files"><boltAction type="file" filePath="eslint.config.js">import js from '@eslint/js';
-import globals from 'globals';
-import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
-import tseslint from 'typescript-eslint';
-
-export default tseslint.config(
-  { ignores: ['dist'] },
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['**/*.{ts,tsx}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-    plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-    },
-  }
-);
-</boltAction></boltArtifact>`;
-
-      const nodeBasePrompt = '<boltArtifact id="project-import" title="Project Files"><boltAction type="file" filePath="index.js">// run `node index.js` in the terminal\n\nconsole.log(`Hello Node.js v${process.versions.node}!`);\n</boltAction><boltAction type="file" filePath="package.json">{\n  "name": "node-starter",\n  "private": true,\n  "scripts": {\n    "test": "echo \\"Error: no test specified\\" && exit 1"\n  }\n}\n</boltAction></boltArtifact>';
-      
-      const basePrompt = "For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.\n\nBy default, this template supports JSX syntax with Tailwind CSS classes, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.\n\nUse icons from lucide-react for logos.\n\nUse stock photos from unsplash where appropriate, only valid URLs you know exist. Do not download the images, only link to them in image tags.\n\n";
-      
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: API_CONFIG.CLAUDE_MODELS.CLAUDE_3_5_SONNET,
-          max_tokens: 200,
-          messages: [{ role: 'user', content: prompt }],
-          system: "Return either node or react based on what do you think this project should be. Only return a single word either 'node' or 'react'. Do not return anything extra"
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const answer = data.content[0].text.trim().toLowerCase();
-      
-      if (answer === 'react') {
-        return {
-          prompts: [basePrompt, `Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${reactBasePrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
-          uiPrompts: [reactBasePrompt]
-        };
-      } else if (answer === 'node') {
-        return {
-          prompts: [`Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${reactBasePrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
-          uiPrompts: [nodeBasePrompt]
-        };
-      } else {
-        throw new Error(`Unexpected response from Claude: ${answer}`);
-      }
-    } catch (error) {
-      console.error('Claude API template error:', error);
-      throw error;
-    }
-  },
-  
-  async chat(messages: any[]): Promise<string> {
-    try {
-      if (!CLAUDE_API_KEY) {
-        throw new Error('Claude API key is missing. Please set VITE_CLAUDE_API_KEY in your .env file.');
-      }
-      
-      // Define system prompt
-      const systemPrompt = `
-You are Bolt, an expert AI assistant and exceptional senior software developer with vast knowledge across multiple programming languages, frameworks, and best practices.
-
-You operate in an environment called WebContainer, an in-browser Node.js runtime that emulates a Linux system to some degree. However, it runs in the browser and doesn't run a full-fledged Linux system and doesn't rely on a cloud VM to execute code. All code is executed in the browser.
-
-Use best coding practices. When writing code:
-- Use 2 spaces for code indentation
-- Split functionality into smaller modules instead of putting everything in a single gigantic file
-- Keep files as small as possible, extracting related functionalities into separate modules
-- Files should be clean, readable, and maintainable
-`;
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: API_CONFIG.CLAUDE_MODELS.CLAUDE_3_5_SONNET,
-          max_tokens: API_CONFIG.MAX_TOKENS.EXTENDED,
-          messages: messages,
-          system: systemPrompt
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.content[0].text;
-    } catch (error) {
-      console.error('Claude API chat error:', error);
-      throw error;
-    }
-  }
-};
 
 // Helper to process and clean generated code
 function processGeneratedCode(code: string): string {
