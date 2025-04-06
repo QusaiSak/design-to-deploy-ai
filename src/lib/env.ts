@@ -26,6 +26,10 @@ export const ENV = {
   CLERK_PUBLISHABLE_KEY: getEnv('VITE_CLERK_PUBLISHABLE_KEY', '')
 };
 
+// Constants for the OpenRouter API
+export const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1';
+export const OPENROUTER_REFERER = 'https://lovable.dev/';
+
 // Validate required environment variables
 export const validateEnv = (): { valid: boolean; missing: string[] } => {
   const requiredVars = [
@@ -47,4 +51,4 @@ if (import.meta.env.DEV) {
   // @ts-ignore
   window.__envStatus = validateEnv();
   console.log('Environment validation:', validateEnv());
-} 
+}

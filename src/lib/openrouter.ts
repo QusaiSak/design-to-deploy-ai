@@ -1,4 +1,5 @@
-import { ENV } from './env';
+
+import { ENV, OPENROUTER_API_URL, OPENROUTER_REFERER } from './env';
 
 // Use our ENV utility instead of directly accessing import.meta.env
 const OPENROUTER_API_KEY = ENV.OPENROUTER_API_KEY;
@@ -20,8 +21,8 @@ export function debugEnvVars() {
 // Constants for API configuration
 export const API_CONFIG = {
   OPENROUTER_MODELS: {
-    DEEPSEEK: 'deepseek/deepseek-chat-v3-0324:free',
-    META_LLAMA_3: 'meta-llama/llama-3-70b-instruct:free',
+    GOOGLE_GEMINI_PRO: 'google/gemini-pro',
+    META_LLAMA_3: 'meta-llama/llama-3-70b-instruct',
     GOOGLE_GEMINI_PRO_VISION: 'google/gemini-2.5-pro-exp-03-25:free'
   },
   MAX_TOKENS: {
@@ -95,7 +96,7 @@ export async function generateCode(
   const maxRetries = 3;
   const fallbackModels = [
     "google/gemini-2.5-pro-exp-03-25:free",
-    "meta-llama/llama-3-70b-instruct:free"
+    "meta-llama/llama-3-70b-instruct"
   ];
   
   // Try selected model first, then fallbacks if needed
@@ -244,17 +245,11 @@ IMPORTANT: Name your component "App" and use React.useState instead of {useState
       currentModel = fallbackModels[fallbackIndex];
       console.log(`Switching to fallback model: ${currentModel}`);
     }
-  }
-  
-  throw new Error('Failed to generate code after multiple attempts');
-}
 
-// Safely get origin for HTTP-Referer header
-function getSafeOrigin(): string {
-  try {
-    return window.location.origin;
-  } catch (e) {
-    console.warn('Could not access window.location.origin, using default origin');
-    return 'https://wireframe-ai.app'; // Fallback origin
+    const data: OpenRouterCompletionResponse = await response.json();
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error generating chat completion:', error);
+    throw error;
   }
-}
+};
