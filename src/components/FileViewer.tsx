@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Folder, File, Code, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -129,122 +130,231 @@ export function FileViewer({ generatedCode, isLoading = false }: FileViewerProps
     }
 
     try {
-      // Find App component code
-      let appComponentCode = '';
-      // Try to find the App component with function declaration
-      const appMatch = generatedCode.match(/function App\(\) {[\s\S]*?^}$/m);
-      
-      if (appMatch) {
-        appComponentCode = appMatch[0];
-      } else {
-        // Try to find the App component with the final "App;" line
-        const appBlockStart = generatedCode.indexOf('function App()');
-        if (appBlockStart !== -1) {
-          const appBlockEnd = generatedCode.indexOf('App;', appBlockStart);
-          if (appBlockEnd !== -1) {
-            appComponentCode = generatedCode.substring(appBlockStart, appBlockEnd + 4);
-          } else {
-            appComponentCode = generatedCode;
-          }
-        } else {
-          // Fallback - just use the whole code
-          appComponentCode = generatedCode;
-        }
-      }
-      
-      // Find CSS code
-      let cssCode = '';
-      // Look for CSS section using several possible markers
-      const cssMarkers = ["corresponding CSS", "App.css", "css\n", ":root {"];
-      let cssStartIndex = -1;
-
-      // Check each possible marker
-      for (const marker of cssMarkers) {
-        cssStartIndex = generatedCode.indexOf(marker);
-        if (cssStartIndex !== -1) break;
-      }
-
-      if (cssStartIndex !== -1) {
-        // Try to find a CSS code block first
-        const cssBlockStart = generatedCode.indexOf('```css', cssStartIndex);
-        if (cssBlockStart !== -1) {
-          const cssBlockEnd = generatedCode.indexOf('```', cssBlockStart + 6);
-          if (cssBlockEnd !== -1) {
-            cssCode = generatedCode.substring(cssBlockStart + 6, cssBlockEnd).trim();
-          }
-        } else {
-          // Try to capture CSS rules directly
-          const rootStart = generatedCode.indexOf(':root {', cssStartIndex);
-          if (rootStart !== -1) {
-            // Find a reasonable end point
-            let cssEnd = generatedCode.length;
-            const possibleEndMarkers = ["Key features", "```", "## ", "# "];
-            for (const marker of possibleEndMarkers) {
-              const markerPos = generatedCode.indexOf(marker, rootStart + 10);
-              if (markerPos !== -1 && markerPos < cssEnd) {
-                cssEnd = markerPos;
-              }
-            }
-            cssCode = generatedCode.substring(rootStart, cssEnd).trim();
-          } else if (generatedCode.includes('body {')) {
-            // Last resort - try to find CSS starting with body
-            const bodyStart = generatedCode.indexOf('body {', cssStartIndex);
-            if (bodyStart !== -1) {
-              let cssEnd = generatedCode.length;
-              // Try to find a reasonable end marker
-              const endMarker = generatedCode.indexOf('```', bodyStart);
-              if (endMarker !== -1) {
-                cssEnd = endMarker;
-              }
-              cssCode = generatedCode.substring(bodyStart, cssEnd).trim();
-            }
-          }
-        }
-      }
-      
-      // Create file structure
+      // Standard React project structure files
       const fileStructure: FileItem[] = [
         {
           name: 'src',
           path: 'src',
           type: 'folder',
+          children: []
+        },
+        {
+          name: 'public',
+          path: 'public',
+          type: 'folder',
           children: [
             {
-              name: 'App.jsx',
-              path: 'src/App.jsx',
+              name: 'index.html',
+              path: 'public/index.html',
               type: 'file',
-              content: appComponentCode
+              content: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`
             }
           ]
+        },
+        {
+          name: 'package.json',
+          path: 'package.json',
+          type: 'file',
+          content: `{
+  "name": "react-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.27",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  }
+}`
+        },
+        {
+          name: 'README.md',
+          path: 'README.md',
+          type: 'file',
+          content: `# React App Generated from Wireframe
+
+This project was generated using AI from a wireframe design. Below is a description of the project structure and components.
+
+## Getting Started
+
+1. Install dependencies: \`npm install\`
+2. Run the app: \`npm run dev\`
+
+## Project Structure
+
+- \`/src\` - Main source code
+  - \`/components\` - React components
+  - \`/styles\` - CSS styles
+  - \`App.tsx\` - Main App component
+  - \`main.tsx\` - Entry point
+- \`/public\` - Static assets
+`
         }
       ];
+
+      // Extract code components from generatedCode
+      let componentCode = '';
       
-      // Add CSS file if CSS content was found
-      if (cssCode) {
-        fileStructure[0].children?.push({
-          name: 'App.css',
-          path: 'src/App.css',
-          type: 'file',
-          content: cssCode
-        });
+      // Clean up the code by removing markdown backticks and language identifiers
+      let cleanedCode = generatedCode.replace(/```(jsx|javascript|js|react|tsx|typescript)?|```/g, '').trim();
+      
+      // Check for import section to detect component code
+      if (cleanedCode.includes('import React')) {
+        componentCode = cleanedCode;
+      } else {
+        // Try to find React component in the code
+        const appComponentStart = cleanedCode.indexOf('function App()');
+        if (appComponentStart !== -1) {
+          const appComponentEnd = findClosingBrace(cleanedCode, appComponentStart);
+          if (appComponentEnd !== -1) {
+            componentCode = cleanedCode.substring(appComponentStart, appComponentEnd + 1);
+          }
+        } else if (cleanedCode.includes('const App = ()')) {
+          const appComponentStart = cleanedCode.indexOf('const App = ()');
+          const appComponentEnd = findClosingBrace(cleanedCode, appComponentStart);
+          if (appComponentEnd !== -1) {
+            componentCode = cleanedCode.substring(appComponentStart, appComponentEnd + 1);
+          }
+        }
+      }
+
+      // If we have component code, add it to the file structure
+      if (componentCode) {
+        // Set up standard React file structure
+        const srcFolderIndex = fileStructure.findIndex(f => f.path === 'src');
+        if (srcFolderIndex !== -1) {
+          const srcChildren = fileStructure[srcFolderIndex].children || [];
+          
+          // Components folder
+          srcChildren.push({
+            name: 'components',
+            path: 'src/components',
+            type: 'folder',
+            children: []
+          });
+          
+          // Main App.tsx file
+          srcChildren.push({
+            name: 'App.tsx',
+            path: 'src/App.tsx',
+            type: 'file',
+            content: `import React from 'react';
+import './App.css';
+
+${componentCode}
+
+export default App;`
+          });
+          
+          // Main.tsx entry point
+          srcChildren.push({
+            name: 'main.tsx',
+            path: 'src/main.tsx',
+            type: 'file',
+            content: `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`
+          });
+          
+          // Extract CSS if present
+          let cssContent = '';
+          const cssStartIndex = cleanedCode.indexOf(':root {') || cleanedCode.indexOf('body {');
+          if (cssStartIndex !== -1) {
+            const cssEndIndex = findClosingBrace(cleanedCode, cssStartIndex);
+            if (cssEndIndex !== -1) {
+              cssContent = cleanedCode.substring(cssStartIndex, cssEndIndex + 1);
+            }
+          }
+          
+          // Add CSS file
+          srcChildren.push({
+            name: 'App.css',
+            path: 'src/App.css',
+            type: 'file',
+            content: cssContent || `/* Generated styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+:root {
+  --primary-color: #3b82f6;
+  --secondary-color: #6b7280;
+}
+`
+          });
+          
+          srcChildren.push({
+            name: 'index.css',
+            path: 'src/index.css',
+            type: 'file',
+            content: `@tailwind base;
+@tailwind components;
+@tailwind utilities;`
+          });
+          
+          // Update src folder children
+          fileStructure[srcFolderIndex].children = srcChildren;
+        }
       }
       
       setFiles(fileStructure);
       
-      // Select the App.jsx file by default
-      const defaultFile = fileStructure[0].children?.[0];
-      if (defaultFile) {
-        setSelectedFile(defaultFile);
+      // Select the first file by default (App.tsx or README.md)
+      const srcFolder = fileStructure.find(f => f.path === 'src');
+      if (srcFolder && srcFolder.children) {
+        const appFile = srcFolder.children.find(f => f.path === 'src/App.tsx');
+        if (appFile) {
+          setSelectedFile(appFile);
+        } else {
+          // Fallback to README
+          const readmeFile = fileStructure.find(f => f.path === 'README.md');
+          if (readmeFile) {
+            setSelectedFile(readmeFile);
+          }
+        }
       }
     } catch (error) {
       console.error('Error parsing code:', error);
       
-      // Fallback - just create a single file with all the code
+      // Fallback - create a basic structure with the raw code
       const fallbackFile = {
-        name: 'App.jsx',
-        path: 'src/App.jsx',
+        name: 'App.tsx',
+        path: 'src/App.tsx',
         type: 'file' as const,
-        content: generatedCode
+        content: generatedCode || ''
       };
       
       setFiles([
@@ -253,12 +363,38 @@ export function FileViewer({ generatedCode, isLoading = false }: FileViewerProps
           path: 'src',
           type: 'folder' as const,
           children: [fallbackFile]
+        },
+        {
+          name: 'README.md',
+          path: 'README.md',
+          type: 'file' as const,
+          content: '# Generated React App\n\nThis is a React application generated from a wireframe.'
         }
       ]);
       
       setSelectedFile(fallbackFile);
     }
   }, [generatedCode]);
+
+  // Helper function to find the closing brace for a code block
+  function findClosingBrace(code: string, startIndex: number): number {
+    let braceCount = 0;
+    let foundOpening = false;
+    
+    for (let i = startIndex; i < code.length; i++) {
+      if (code[i] === '{') {
+        braceCount++;
+        foundOpening = true;
+      } else if (code[i] === '}') {
+        braceCount--;
+        if (foundOpening && braceCount === 0) {
+          return i;
+        }
+      }
+    }
+    
+    return -1;
+  }
 
   // Handle file selection
   const handleFileSelect = (file: FileItem) => {

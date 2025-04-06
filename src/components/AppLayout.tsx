@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -27,7 +28,7 @@ export default function AppLayout() {
           </Button>
         </header>
         <main className="flex-1 overflow-auto">
-          <div className="container py-4 mx-auto">
+          <div className="py-2 px-4">
             <EnvironmentCheck />
           </div>
           <Outlet />
