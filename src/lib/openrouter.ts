@@ -20,8 +20,8 @@ export function debugEnvVars() {
 // Constants for API configuration
 export const API_CONFIG = {
   OPENROUTER_MODELS: {
-    GOOGLE_GEMINI_PRO: 'google/gemini-pro',
-    META_LLAMA_3: 'meta-llama/llama-3-70b-instruct',
+    DEEPSEEK: 'deepseek/deepseek-chat-v3-0324:free',
+    META_LLAMA_3: 'meta-llama/llama-3-70b-instruct:free',
     GOOGLE_GEMINI_PRO_VISION: 'google/gemini-2.5-pro-exp-03-25:free'
   },
   MAX_TOKENS: {
@@ -95,7 +95,7 @@ export async function generateCode(
   const maxRetries = 3;
   const fallbackModels = [
     "google/gemini-2.5-pro-exp-03-25:free",
-    "meta-llama/llama-3-70b-instruct"
+    "meta-llama/llama-3-70b-instruct:free"
   ];
   
   // Try selected model first, then fallbacks if needed
