@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Check, CpuIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,19 +6,19 @@ import { Label } from '@/components/ui/label';
 
 const models = [
   {
-    id: 'deepseek/deepseek-chat-v3-0324:free',
-    name: 'DeepSeek Chat v3',
-    description: 'Powerful chat model with strong reasoning abilities'
-  },
-  {
     id: 'google/gemini-2.5-pro-exp-03-25:free',
     name: 'Gemini 2.5 Pro',
-    description: 'High performance multimodal model from Google'
+    description: 'High performance model with excellent design capabilities (recommended)'
   },
   {
     id: 'meta-llama/llama-3.3-70b-instruct:free',
     name: 'Llama 3.3 70B',
-    description: 'Advanced instruction-following LLM from Meta'
+    description: 'Advanced model with strong visual understanding'
+  },
+  {
+    id: 'deepseek/deepseek-chat-v3-0324:free',
+    name: 'DeepSeek Chat v3',
+    description: 'Specialized model for detailed implementation'
   }
 ];
 
@@ -33,6 +32,9 @@ export default function ModelSelector({ selectedModel, onModelSelect }: ModelSel
     <Card>
       <CardContent className="p-6">
         <h3 className="text-lg font-medium mb-4">Select AI Model</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Try different models if you encounter errors. Gemini and Llama models are currently recommended.
+        </p>
         <RadioGroup value={selectedModel} onValueChange={onModelSelect} className="space-y-3">
           {models.map((model) => (
             <div

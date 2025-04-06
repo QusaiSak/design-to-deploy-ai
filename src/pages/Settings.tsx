@@ -147,7 +147,6 @@ export default function Settings() {
         <div className="flex items-center gap-1">
           <span>Made with</span>
           <Heart className="h-4 w-4 text-red-500" />
-          <span>using Lovable</span>
         </div>
       </div>
     </div>

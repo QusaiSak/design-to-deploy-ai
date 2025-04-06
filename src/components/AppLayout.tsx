@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import { EnvironmentCheck } from './EnvironmentCheck';
 
 export default function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -27,6 +27,9 @@ export default function AppLayout() {
           </Button>
         </header>
         <main className="flex-1 overflow-auto">
+          <div className="container py-4 mx-auto">
+            <EnvironmentCheck />
+          </div>
           <Outlet />
         </main>
       </div>
