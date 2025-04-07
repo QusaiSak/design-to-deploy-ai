@@ -6,12 +6,13 @@ import {
   SandpackCodeEditor,
   SandpackPreview,
   SandpackConsole,
+  SandpackFileExplorer,
   SandpackStack,
 } from '@codesandbox/sandpack-react';
 import { aquaBlue } from '@codesandbox/sandpack-themes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Code, Eye, Terminal, RefreshCw } from 'lucide-react';
+import { Code, Eye, Terminal, RefreshCw, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface PreviewProps {
@@ -19,7 +20,7 @@ interface PreviewProps {
 }
 
 export default function Preview({ code }: PreviewProps) {
-  const [activeTab, setActiveTab] = useState<'code' | 'preview' | 'console'>('code');
+  const [activeTab, setActiveTab] = useState<'code' | 'preview' | 'console' | 'files'>('code');
 
   // Process the code to create a proper React app structure with Tailwind CSS
   const reactSetup = {
@@ -90,6 +91,10 @@ module.exports = {
           <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)}>
             <div className="flex items-center justify-between">
               <TabsList className="bg-slate-100">
+                <TabsTrigger value="files" className="flex items-center gap-1">
+                  <FolderOpen className="h-4 w-4" />
+                  <span>Files</span>
+                </TabsTrigger>
                 <TabsTrigger value="code" className="flex items-center gap-1">
                   <Code className="h-4 w-4" />
                   <span>Code</span>
@@ -140,6 +145,10 @@ module.exports = {
             }}
           >
             <SandpackLayout>
+              <SandpackStack style={{ height: '100%', display: activeTab === 'files' ? 'flex' : 'none' }}>
+                <SandpackFileExplorer />
+              </SandpackStack>
+              
               <SandpackStack style={{ height: '100%', display: activeTab === 'code' ? 'flex' : 'none' }}>
                 <SandpackCodeEditor 
                   showLineNumbers={true}

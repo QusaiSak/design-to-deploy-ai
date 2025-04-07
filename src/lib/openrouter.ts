@@ -73,12 +73,19 @@ export const generateCode = async (
     const data = await response.json() as OpenRouterResponse;
     
     // Check if choices array is defined and has at least one item
-    if (!data.choices || !data.choices.length || !data.choices[0]?.message) {
-      throw new Error('Invalid response format from the API');
+    if (!data.choices || data.choices.length === 0) {
+      throw new Error('No response content was generated');
     }
     
-    return data.choices[0].message.content;
+    // Safely access the message content
+    const messageContent = data.choices[0]?.message?.content;
+    if (!messageContent) {
+      throw new Error('Generated content is empty');
+    }
+    
+    return messageContent;
   } catch (error) {
+    // Re-throw any errors to be handled by the caller
     throw error;
   }
 };

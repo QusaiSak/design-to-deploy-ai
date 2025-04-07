@@ -7,7 +7,7 @@ import { generateCode } from '@/lib/openrouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { ArrowLeft, Sparkles, Save, Code } from 'lucide-react';
+import { ArrowLeft, Sparkles, Save, RefreshCw, MessageSquare } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import DescriptionInput from '@/components/DescriptionInput';
 import ModelSelector from '@/components/ModelSelector';
@@ -30,6 +30,8 @@ export default function NewProject() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showChat, setShowChat] = useState(true);
+  const [showCodePanel, setShowCodePanel] = useState(false);
 
   const handleImageUpload = (file: File, preview: string) => {
     setImage(file);
@@ -76,6 +78,8 @@ export default function NewProject() {
           
           // Set the generated code
           setCode(generatedCode);
+          setShowChat(false);
+          setShowCodePanel(true);
           toast.success('Code generated successfully');
         } catch (error: any) {
           let errorMessage = error.message || 'Unknown error occurred';
@@ -107,6 +111,12 @@ export default function NewProject() {
       setError('Failed to process the image. Please try a different image.');
       toast.error('Failed to process image');
       setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (image && description) {
+      await handleGenerate();
     }
   };
 
@@ -213,6 +223,11 @@ export default function NewProject() {
     setError(null);
   };
 
+  // Toggle between chat and code panels
+  const toggleLayout = () => {
+    setShowChat(!showChat);
+  };
+
   return (
     <div className="container px-4 py-4 mx-auto max-w-7xl h-[calc(100vh-4rem)] flex flex-col">
       <div className="flex items-center justify-between mb-6">
@@ -233,67 +248,95 @@ export default function NewProject() {
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            onClick={handleGenerate} 
-            disabled={!image || !description || isGenerating}
-            className="gap-2"
-            size="lg"
-          >
-            <Sparkles className="h-5 w-5" />
-            {isGenerating ? 'Generating...' : 'Generate Website'}
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleSave}
-            disabled={!code || isSaving}
-            className="gap-2"
-            size="sm"
-          >
-            <Save className="h-4 w-4" />
-            <span>{isSaving ? 'Saving...' : 'Save'}</span>
-          </Button>
+          {!showCodePanel ? (
+            <Button 
+              onClick={handleGenerate} 
+              disabled={!image || !description || isGenerating}
+              className="gap-2"
+              size="lg"
+            >
+              <Sparkles className="h-5 w-5" />
+              {isGenerating ? 'Generating...' : 'Generate Website'}
+            </Button>
+          ) : (
+            <>
+              <Button 
+                onClick={handleRegenerate}
+                disabled={isGenerating}
+                variant="outline"
+                className="gap-2"
+                size="sm"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>{isGenerating ? 'Regenerating...' : 'Regenerate'}</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleSave}
+                disabled={!code || isSaving}
+                className="gap-2"
+                size="sm"
+              >
+                <Save className="h-4 w-4" />
+                <span>{isSaving ? 'Saving...' : 'Save'}</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={toggleLayout}
+                className="gap-2"
+                size="sm"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Chat</span>
+              </Button>
+            </>
+          )}
         </div>
       </div>
       
       <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
-        {/* Configuration Panel */}
-        <div className="md:w-1/3 transition-all duration-300 overflow-auto">
-          <Card className="h-full">
-            <CardContent className="pt-6 h-full overflow-auto">
-              {error && (
-                <Alert variant="destructive" className="mb-6">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <div className="space-y-6">
-                <ImageUpload 
-                  onImageUpload={handleImageUpload} 
-                  image={image}
-                  imagePreview={imagePreview}
-                />
-                <DescriptionInput 
-                  description={description}
-                  onChange={setDescription}
-                />
-                <ModelSelector 
-                  selectedModel={selectedModel}
-                  onModelSelect={handleModelChange}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Configuration Panel - only shown when in chat mode or when window is wide enough */}
+        {(showChat || window.innerWidth >= 768) && (
+          <div className={`transition-all duration-300 overflow-auto ${showCodePanel ? 'md:w-1/3' : 'w-full'}`}>
+            <Card className="h-full">
+              <CardContent className="pt-6 h-full overflow-auto">
+                {error && (
+                  <Alert variant="destructive" className="mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                <div className="space-y-6">
+                  <ImageUpload 
+                    onImageUpload={handleImageUpload} 
+                    image={image}
+                    imagePreview={imagePreview}
+                  />
+                  <DescriptionInput 
+                    description={description}
+                    onChange={setDescription}
+                  />
+                  <ModelSelector 
+                    selectedModel={selectedModel}
+                    onModelSelect={handleModelChange}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
-        {/* Preview/Editor Panel */}
-        <div className="md:w-2/3 transition-all duration-300 overflow-hidden">
-          <Card className="h-full">
-            <CardContent className="p-0 h-full">
-              <Preview code={code} />
-            </CardContent>
-          </Card>
-        </div>
+        {/* Preview/Editor Panel - only shown after code generation */}
+        {showCodePanel && (
+          <div className={`md:${showChat ? 'w-2/3' : 'w-full'} transition-all duration-300 overflow-hidden`}>
+            <Card className="h-full">
+              <CardContent className="p-0 h-full">
+                <Preview code={code} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
