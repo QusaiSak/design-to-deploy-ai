@@ -4,7 +4,6 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import { EnvironmentCheck } from './EnvironmentCheck';
 import { Toaster } from "@/components/ui/toaster";
 
 export default function AppLayout() {
@@ -29,9 +28,6 @@ export default function AppLayout() {
           </Button>
         </header>
         <main className="flex-1 overflow-auto">
-          <div className="py-2 px-4">
-            <EnvironmentCheck />
-          </div>
           <Outlet />
         </main>
       </div>

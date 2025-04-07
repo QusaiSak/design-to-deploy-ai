@@ -1,3 +1,4 @@
+
 export const getEnv = (key: string, fallback: string = ''): string => {
   if (import.meta.env[key] !== undefined) {
     return import.meta.env[key] as string;
@@ -10,7 +11,6 @@ export const getEnv = (key: string, fallback: string = ''): string => {
     return window.__env[key];
   }
   
-  console.warn(`Environment variable ${key} not found, using fallback value`);
   return fallback;
 };
 
@@ -49,10 +49,3 @@ export const validateEnv = (): { valid: boolean; missing: string[] } => {
     missing
   };
 };
-
-// Add environment variables to window for debugging in non-production environments
-if (import.meta.env.DEV) {
-  // @ts-ignore
-  window.__envStatus = validateEnv();
-  console.log('Environment validation:', validateEnv());
-}
