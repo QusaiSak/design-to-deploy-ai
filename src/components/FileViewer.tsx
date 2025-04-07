@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Folder, File, Code, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Preview from './Preview';
-import CodeEditor from './CodeEditor';
+import SandpackEditor from './SandpackEditor';
 
 // Define file types for the file explorer
 export interface FileItem {
@@ -119,7 +118,6 @@ interface FileViewerProps {
 export function FileViewer({ generatedCode, isLoading = false }: FileViewerProps) {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
   
   // Parse the generated code and create a file structure
   useEffect(() => {
@@ -433,91 +431,52 @@ body {
       
       {/* Code and Preview Tabs */}
       <div className="flex-1">
-        <Tabs 
-          value={activeTab} 
-          onValueChange={(value) => setActiveTab(value as 'code' | 'preview')}
-          className="h-full flex flex-col"
-        >
-          <TabsList className="w-full border-b rounded-none px-4 pt-2">
-            <TabsTrigger value="code" className="flex items-center gap-2 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Code className="h-4 w-4" />
-              Code
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Eye className="h-4 w-4" />
-              Website Preview
-            </TabsTrigger>
-          </TabsList>
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="code" className="h-full m-0 p-0 overflow-hidden">
-              {isLoading ? (
-                <div className="h-full flex flex-col items-center justify-center text-sm text-gray-400 bg-gray-900/50 rounded-lg">
-                  <div className="animate-spin">
-                    <svg className="w-8 h-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </div>
-                  <p className="mt-2">Generating code...</p>
-                </div>
-              ) : selectedFile ? (
-                <CodeEditor
-                  code={selectedFile.content || ''}
-                  onCodeChange={(newCode) => {
-                    if (selectedFile) {
-                      // Update the selected file's content
-                      const updatedFile = { ...selectedFile, content: newCode };
-                      setSelectedFile(updatedFile);
-                      
-                      // Also update the file in the file list
-                      const updateFileInTree = (items: FileItem[]): FileItem[] => {
-                        return items.map(item => {
-                          if (item.path === selectedFile.path) {
-                            return updatedFile;
-                          } else if (item.children) {
-                            return {
-                              ...item,
-                              children: updateFileInTree(item.children)
-                            };
-                          }
-                          return item;
-                        });
-                      };
-                      
-                      setFiles(updateFileInTree(files));
-                    }
-                  }}
-                />
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-sm text-gray-400 bg-gray-900/50 rounded-lg p-4">
-                  <Code size={24} className="mb-3 opacity-50" />
-                  <p>Select a file to view its code</p>
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent value="preview" className="h-full m-0 p-0 overflow-hidden">
-              {isLoading ? (
-                <div className="h-full flex flex-col items-center justify-center text-sm text-gray-400 bg-gray-900/50 rounded-lg">
-                  <div className="animate-spin">
-                    <svg className="w-8 h-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </div>
-                  <p className="mt-2">Generating preview...</p>
-                </div>
-              ) : generatedCode ? (
-                <Preview code={generatedCode} />
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-sm text-gray-400 bg-gray-900/50 rounded-lg p-4">
-                  <Eye className="w-6 h-6 mb-2 opacity-50" />
-                  <p>Generate code to see a preview</p>
-                </div>
-              )}
-            </TabsContent>
+        {isLoading ? (
+          <div className="h-full flex flex-col items-center justify-center text-sm text-gray-400 bg-gray-900/50 rounded-lg">
+            <div className="animate-spin">
+              <svg className="w-8 h-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <p className="mt-2">Generating code...</p>
           </div>
-        </Tabs>
+        ) : selectedFile ? (
+          <SandpackEditor
+            code={selectedFile.content || ''}
+            onCodeChange={(newCode) => {
+              if (selectedFile) {
+                // Update the selected file's content
+                const updatedFile = { ...selectedFile, content: newCode };
+                setSelectedFile(updatedFile);
+                
+                // Also update the file in the file list
+                const updateFileInTree = (items: FileItem[]): FileItem[] => {
+                  return items.map(item => {
+                    if (item.path === selectedFile.path) {
+                      return updatedFile;
+                    } else if (item.children) {
+                      return {
+                        ...item,
+                        children: updateFileInTree(item.children)
+                      };
+                    }
+                    return item;
+                  });
+                };
+                
+                setFiles(updateFileInTree(files));
+              }
+            }}
+            isLoading={isLoading}
+          />
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-sm text-gray-400 bg-gray-900/50 rounded-lg p-4">
+            <Code size={24} className="mb-3 opacity-50" />
+            <p>Select a file to view its code</p>
+          </div>
+        )}
       </div>
     </div>
   );
-} 
+}
