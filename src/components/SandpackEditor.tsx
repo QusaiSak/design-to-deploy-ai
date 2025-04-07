@@ -1,35 +1,31 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SandpackProvider,
   SandpackLayout,
   SandpackCodeEditor,
   SandpackPreview,
   SandpackConsole,
-  useSandpack,
+  SandpackFileExplorer,
   SandpackStack,
+  useSandpack
 } from '@codesandbox/sandpack-react';
 import { aquaBlue } from '@codesandbox/sandpack-themes';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { RefreshCw, Code, Eye, Terminal } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RefreshCw, Code, Eye, Terminal, FolderOpen } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface SandpackEditorProps {
-  code: string;
-  onCodeChange?: (code: string) => void;
-  isLoading?: boolean;
-}
-
+// SandpackControls component for refresh functionality
 const SandpackControls = () => {
   const { sandpack } = useSandpack();
   const { refresh } = sandpack;
 
   return (
     <div className="flex items-center gap-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
+      <Button
+        variant="outline"
+        size="sm"
         onClick={() => refresh()}
         className="gap-1"
       >
@@ -40,12 +36,18 @@ const SandpackControls = () => {
   );
 };
 
+interface SandpackEditorProps {
+  code: string;
+  onCodeChange?: (code: string) => void;
+  isLoading?: boolean;
+}
+
 export default function SandpackEditor({ code, onCodeChange, isLoading = false }: SandpackEditorProps) {
-  const [activeView, setActiveView] = React.useState<'code' | 'preview' | 'console'>('code');
-  
+  const [activeView, setActiveView] = useState<'code' | 'preview' | 'console' | 'files'>('code');
+
   // Process the code to create a proper React app structure with Tailwind CSS
   const reactSetup = {
-    'App.jsx': code,
+    'App.jsx': code || 'export default function App() { return <div>Enter some code</div> }',
     'index.jsx': `
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -109,7 +111,11 @@ module.exports = {
       <div className="border-b p-2">
         <Tabs value={activeView} onValueChange={(value) => setActiveView(value as any)}>
           <div className="flex items-center justify-between">
-            <TabsList>
+            <TabsList className="bg-slate-100">
+              <TabsTrigger value="files" className="flex items-center gap-1">
+                <FolderOpen className="h-4 w-4" />
+                <span>Files</span>
+              </TabsTrigger>
               <TabsTrigger value="code" className="flex items-center gap-1">
                 <Code className="h-4 w-4" />
                 <span>Code</span>
@@ -127,7 +133,7 @@ module.exports = {
           </div>
         </Tabs>
       </div>
-
+      
       <div className="flex-1 overflow-hidden">
         <SandpackProvider
           theme={aquaBlue}
@@ -152,6 +158,10 @@ module.exports = {
           }}
         >
           <SandpackLayout>
+            <SandpackStack style={{ height: '100%', display: activeView === 'files' ? 'flex' : 'none' }}>
+              <SandpackFileExplorer />
+            </SandpackStack>
+            
             <SandpackStack style={{ height: '100%', display: activeView === 'code' ? 'flex' : 'none' }}>
               <SandpackCodeEditor 
                 showLineNumbers={true}
