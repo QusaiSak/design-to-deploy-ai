@@ -115,14 +115,14 @@ const streamResponse = async (
         messages: [
           {
             role: 'system',
-            content: 'You are an expert web developer who specializes in turning wireframes into React code with Tailwind CSS. Your task is to generate a complete, functional React component based on a provided wireframe image and description. Focus on creating clean, maintainable code with proper component structure. Use Tailwind CSS for styling.'
+            content: 'You are an expert web developer who specializes in turning wireframes into React code with Tailwind CSS. Your task is to generate a complete, functional React component based on a provided wireframe image and description. Focus on creating clean, maintainable code with proper component structure. Use Tailwind CSS for styling. Generate code with line by line comments explaining what each part does.'
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: `Generate a React component with Tailwind CSS based on this wireframe. Here's the description: ${description}`
+                text: `Generate a React component with Tailwind CSS based on this wireframe. Here's the description: ${description}. Please provide detailed comments for each line of code to explain what it does.`
               },
               {
                 type: 'image_url',

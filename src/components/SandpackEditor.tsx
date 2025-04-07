@@ -43,7 +43,7 @@ const SandpackControls = () => {
 export default function SandpackEditor({ code, onCodeChange, isLoading = false }: SandpackEditorProps) {
   const [activeView, setActiveView] = React.useState<'code' | 'preview' | 'console'>('code');
   
-  // Process the code to create a proper React app structure
+  // Process the code to create a proper React app structure with Tailwind CSS
   const reactSetup = {
     'App.jsx': code,
     'index.jsx': `
@@ -58,14 +58,43 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 );`,
     'styles.css': `
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
-  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #333;
+  background-color: #fff;
 }
 
 :root {
-  --primary-color: #3b82f6;
-  --secondary-color: #6b7280;
+  --primary-color: #1EAEDB;
+  --secondary-color: #33C3F0;
+}`,
+    'tailwind.config.js': `
+module.exports = {
+  content: [
+    "./index.html",
+    "./**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#1EAEDB',
+        secondary: '#33C3F0',
+        accent: '#0FA0CE',
+      },
+    },
+  },
+  plugins: [],
+}`,
+    'postcss.config.js': `
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
 }`
   };
 
@@ -106,13 +135,20 @@ body {
           files={reactSetup}
           options={{
             activeFile: 'App.jsx',
-            visibleFiles: ['App.jsx', 'styles.css'],
+            visibleFiles: ['App.jsx', 'styles.css', 'tailwind.config.js'],
             editorHeight: '100%',
             showNavigator: false,
             showLineNumbers: true,
             showTabs: false,
             recompileMode: "delayed",
-            recompileDelay: 500,
+            recompileDelay: 300,
+          }}
+          customSetup={{
+            dependencies: {
+              "tailwindcss": "^3.3.0",
+              "postcss": "^8.4.27",
+              "autoprefixer": "^10.4.14"
+            }
           }}
         >
           <SandpackLayout>
