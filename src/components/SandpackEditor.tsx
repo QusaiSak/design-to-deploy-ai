@@ -1,20 +1,18 @@
-
-import React, { useState } from 'react';
-import {
-  SandpackProvider,
-  SandpackLayout,
-  SandpackCodeEditor,
-  SandpackPreview,
-  SandpackConsole,
-  SandpackFileExplorer,
-  SandpackStack,
-  useSandpack
-} from '@codesandbox/sandpack-react';
-import { aquaBlue } from '@codesandbox/sandpack-themes';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { RefreshCw, Code, Eye, Terminal, FolderOpen } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    SandpackCodeEditor,
+    SandpackFileExplorer,
+    SandpackLayout,
+    SandpackPreview,
+    SandpackProvider,
+    SandpackStack,
+    useSandpack
+} from '@codesandbox/sandpack-react';
+import { aquaBlue } from '@codesandbox/sandpack-themes';
+import { Code, Eye, FolderOpen, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
 
 // SandpackControls component for refresh functionality
 const SandpackControls = () => {
@@ -43,12 +41,12 @@ interface SandpackEditorProps {
 }
 
 export default function SandpackEditor({ code, onCodeChange, isLoading = false }: SandpackEditorProps) {
-  const [activeView, setActiveView] = useState<'code' | 'preview' | 'console' | 'files'>('code');
+  const [activeView, setActiveView] = useState<'code' | 'preview' | 'files'>('code');
 
   // Process the code to create a proper React app structure with Tailwind CSS
   const reactSetup = {
-    'App.jsx': code || 'export default function App() { return <div>Enter some code</div> }',
-    'index.jsx': `
+    'App.tsx': code || 'export default function App() { return <div>Enter some code</div> }',
+    'index.tsx': `
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -68,11 +66,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: #333;
   background-color: #fff;
-}
-
-:root {
-  --primary-color: #1EAEDB;
-  --secondary-color: #33C3F0;
 }`,
     'tailwind.config.js': `
 module.exports = {
@@ -124,10 +117,6 @@ module.exports = {
                 <Eye className="h-4 w-4" />
                 <span>Preview</span>
               </TabsTrigger>
-              <TabsTrigger value="console" className="flex items-center gap-1">
-                <Terminal className="h-4 w-4" />
-                <span>Console</span>
-              </TabsTrigger>
             </TabsList>
             <SandpackControls />
           </div>
@@ -137,11 +126,11 @@ module.exports = {
       <div className="flex-1 overflow-hidden">
         <SandpackProvider
           theme={aquaBlue}
-          template="react"
+          template="react-ts"
           files={reactSetup}
           options={{
-            activeFile: 'App.jsx',
-            visibleFiles: ['App.jsx', 'styles.css', 'tailwind.config.js'],
+            activeFile: 'App.tsx',
+            visibleFiles: ['App.tsx', 'styles.css', 'tailwind.config.js'],
             editorHeight: '100%',
             showNavigator: false,
             showLineNumbers: true,
@@ -174,10 +163,6 @@ module.exports = {
             
             <SandpackStack style={{ height: '100%', display: activeView === 'preview' ? 'flex' : 'none' }}>
               <SandpackPreview showRefreshButton={false} showOpenInCodeSandbox={false} />
-            </SandpackStack>
-            
-            <SandpackStack style={{ height: '100%', display: activeView === 'console' ? 'flex' : 'none' }}>
-              <SandpackConsole />
             </SandpackStack>
           </SandpackLayout>
         </SandpackProvider>

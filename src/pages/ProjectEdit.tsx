@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
-import { getProject, updateProject, Project as ProjectType, syncClerkUserWithSupabase, initializeDatabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { ArrowLeft, Save, AlertTriangle } from 'lucide-react';
 import CodeEditor from '@/components/CodeEditor';
 import Preview from '@/components/Preview';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { getProject, initializeDatabase, Project as ProjectType, syncClerkUserWithSupabase, updateProject } from '@/lib/supabase';
+import { useAuth } from '@clerk/clerk-react';
+import { AlertTriangle, ArrowLeft, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function ProjectEdit() {
   const { id } = useParams<{ id: string }>();
@@ -177,19 +176,6 @@ export default function ProjectEdit() {
             placeholder="Project Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-        
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium mb-1">
-            Description
-          </label>
-          <Textarea
-            id="description"
-            placeholder="Project Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="h-32"
           />
         </div>
       </div>

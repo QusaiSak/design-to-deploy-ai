@@ -1,28 +1,45 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUser, useAuth } from '@clerk/clerk-react';
-import { createProject, uploadImage, syncClerkUserWithSupabase, initializeDatabase } from '@/lib/supabase';
-import { generateCode } from '@/lib/openrouter';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
-import { ArrowLeft, Sparkles, Save, RefreshCw, MessageSquare } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
-import DescriptionInput from '@/components/DescriptionInput';
 import ModelSelector from '@/components/ModelSelector';
 import Preview from '@/components/Preview';
-import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { generateCode } from '@/lib/openrouter';
+import { createProject, initializeDatabase, syncClerkUserWithSupabase, uploadImage } from '@/lib/supabase';
+import { useAuth, useUser } from '@clerk/clerk-react';
+import { AlertTriangle, ArrowLeft, ChevronDown, ChevronUp, MessageSquare, RefreshCw, Save, Sparkles } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+// Custom hook for responsive design
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [matches, query]);
+
+  return matches;
+}
 
 export default function NewProject() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { getToken } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState('Design a modern responsive website');
   const [selectedModel, setSelectedModel] = useState('google/gemini-2.5-pro-exp-03-25:free');
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -32,6 +49,16 @@ export default function NewProject() {
   const [error, setError] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(true);
   const [showCodePanel, setShowCodePanel] = useState(false);
+  const [expandedTextarea, setExpandedTextarea] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    // Auto-adjust the height of the textarea based on content
+    if (descriptionRef.current) {
+      descriptionRef.current.style.height = 'auto';
+      descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
+    }
+  }, [description, expandedTextarea]);
 
   const handleImageUpload = (file: File, preview: string) => {
     setImage(file);
@@ -43,11 +70,6 @@ export default function NewProject() {
   const handleGenerate = async () => {
     if (!image) {
       toast.error('Please upload a wireframe image');
-      return;
-    }
-
-    if (!description) {
-      toast.error('Please provide a description');
       return;
     }
 
@@ -81,8 +103,8 @@ export default function NewProject() {
           setShowChat(false);
           setShowCodePanel(true);
           toast.success('Code generated successfully');
-        } catch (error: any) {
-          let errorMessage = error.message || 'Unknown error occurred';
+        } catch (error: unknown) {
+          let errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
           
           // Handle specific authentication error
           if (errorMessage === 'No auth credentials found') {
@@ -107,7 +129,7 @@ export default function NewProject() {
         setIsGenerating(false);
         toast.error('Failed to process image');
       };
-    } catch (error) {
+    } catch (error: unknown) {
       setError('Failed to process the image. Please try a different image.');
       toast.error('Failed to process image');
       setIsGenerating(false);
@@ -115,7 +137,7 @@ export default function NewProject() {
   };
 
   const handleRegenerate = async () => {
-    if (image && description) {
+    if (image) {
       await handleGenerate();
     }
   };
@@ -171,17 +193,18 @@ export default function NewProject() {
             description: 'Your project will still be saved, but with a placeholder image.'
           });
         }
-      } catch (uploadError: any) {
+      } catch (uploadError: unknown) {
         // If there's a storage permission error, we'll use a placeholder URL
-        if (uploadError.message?.includes('bucket') || 
-            uploadError.message?.includes('permission') || 
-            uploadError.message?.includes('storage')) {
+        const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+        if (errorMessage.includes('bucket') || 
+            errorMessage.includes('permission') || 
+            errorMessage.includes('storage')) {
           imageUrl = `https://placeholder.co/800x600?text=${encodeURIComponent('Wireframe: ' + image.name)}`;
           toast.warning('Using placeholder image due to storage limitations', {
             description: 'Your project will still be saved, but with a placeholder image.'
           });
         } else {
-          throw new Error(`Failed to upload image: ${uploadError.message || 'Unknown error'}`);
+          throw new Error(`Failed to upload image: ${errorMessage}`);
         }
       }
       
@@ -208,8 +231,8 @@ export default function NewProject() {
       // Success - project saved
       toast.success('Project saved successfully');
       navigate(`/projects/${project.id}`);
-    } catch (error: any) {
-      const errorMessage = error.message || 'An unknown error occurred while saving your project';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while saving your project';
       setError(errorMessage);
       toast.error(`Failed to save project: ${errorMessage}`);
     } finally {
@@ -228,14 +251,18 @@ export default function NewProject() {
     setShowChat(!showChat);
   };
 
+  const toggleTextareaSize = () => {
+    setExpandedTextarea(!expandedTextarea);
+  };
+
   return (
     <div className="container px-4 py-4 mx-auto max-w-7xl h-[calc(100vh-4rem)] flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="mr-2"
+            className="mr-2 flex-shrink-0"
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -244,16 +271,16 @@ export default function NewProject() {
             placeholder="Untitled Project"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="text-lg font-medium max-w-xs border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+            className="text-lg font-medium sm:max-w-xs border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           {!showCodePanel ? (
             <Button 
               onClick={handleGenerate} 
-              disabled={!image || !description || isGenerating}
-              className="gap-2"
-              size="lg"
+              disabled={!image || isGenerating}
+              className="gap-2 w-full sm:w-auto"
+              size={isMobile ? "default" : "lg"}
             >
               <Sparkles className="h-5 w-5" />
               {isGenerating ? 'Generating...' : 'Generate Website'}
@@ -268,7 +295,7 @@ export default function NewProject() {
                 size="sm"
               >
                 <RefreshCw className="h-4 w-4" />
-                <span>{isGenerating ? 'Regenerating...' : 'Regenerate'}</span>
+                <span className="hidden sm:inline">{isGenerating ? 'Regenerating...' : 'Regenerate'}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -278,7 +305,7 @@ export default function NewProject() {
                 size="sm"
               >
                 <Save className="h-4 w-4" />
-                <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save'}</span>
               </Button>
               <Button 
                 variant="ghost" 
@@ -287,7 +314,7 @@ export default function NewProject() {
                 size="sm"
               >
                 <MessageSquare className="h-4 w-4" />
-                <span>Chat</span>
+                <span className="hidden sm:inline">Chat</span>
               </Button>
             </>
           )}
@@ -313,10 +340,29 @@ export default function NewProject() {
                     image={image}
                     imagePreview={imagePreview}
                   />
-                  <DescriptionInput 
-                    description={description}
-                    onChange={setDescription}
-                  />
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="description" className="text-sm font-medium">
+                        Describe what the project should be
+                      </Label>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={toggleTextareaSize}
+                        className="h-6 p-0 text-muted-foreground hover:text-foreground"
+                      >
+                        {expandedTextarea ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <Textarea
+                      id="description"
+                      ref={descriptionRef}
+                      placeholder="Describe what you want the website to do or look like"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className={`resize-none transition-all duration-300 ${expandedTextarea ? 'h-60' : 'h-24'}`}
+                    />
+                  </div>
                   <ModelSelector 
                     selectedModel={selectedModel}
                     onModelSelect={handleModelChange}

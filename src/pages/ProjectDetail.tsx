@@ -1,15 +1,14 @@
-
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getProject, Project as ProjectType } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { ArrowLeft, Calendar, Code, Edit } from 'lucide-react';
 import CodeEditor from '@/components/CodeEditor';
 import Preview from '@/components/Preview';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { getProject, Project as ProjectType } from '@/lib/supabase';
 import { format } from 'date-fns';
+import { ArrowLeft, Calendar, Code, Edit } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -91,12 +90,6 @@ export default function ProjectDetail() {
           <span>{formattedDate}</span>
         </div>
       </div>
-      
-      {project.description && (
-        <div className="bg-muted p-4 rounded-md mb-6">
-          <p className="text-muted-foreground">{project.description}</p>
-        </div>
-      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div>
